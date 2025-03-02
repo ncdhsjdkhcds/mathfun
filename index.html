@@ -2,310 +2,226 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Math Fun & Fireworks!</title>
+    <title>Math Fun & Fireworks</title>
     <style>
-        /* General Styles */
-        body, html {
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
             margin: 0;
             padding: 0;
-            height: 100%;
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-color: #f4f4f4;
         }
-
-        #game-container {
-            width: 100%;
-            height: 100%;
-            position: relative;
-            background-color: white;
-        }
-
         canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
             display: block;
+            margin: 0 auto;
+            background-color: #ffffff;
         }
-
-        /* Score and Text */
-        .score {
+        .game-container {
             position: absolute;
-            top: 20px;
-            left: 20px;
-            font-size: 24px;
-            color: black;
-        }
-
-        .question {
-            position: absolute;
-            top: 100px;
+            top: 10%;
             left: 50%;
             transform: translateX(-50%);
-            font-size: 36px;
-            font-weight: bold;
-            color: black;
-        }
-
-        .answer-input {
-            position: absolute;
-            top: 200px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 28px;
-            font-family: monospace;
-            border: none;
-            padding: 10px;
-            width: 80px;
             text-align: center;
         }
-
-        .correct {
-            color: green;
-            font-size: 30px;
-            position: absolute;
-            top: 250px;
-            left: 50%;
-            transform: translateX(-50%);
+        .question {
+            font-size: 36px;
+            margin-bottom: 20px;
         }
-
-        .wrong {
-            color: red;
-            font-size: 30px;
-            position: absolute;
-            top: 250px;
-            left: 50%;
-            transform: translateX(-50%);
+        .score {
+            font-size: 24px;
+            margin-bottom: 10px;
         }
-
+        .input-container {
+            margin-top: 20px;
+        }
+        .history {
+            position: absolute;
+            top: 10%;
+            right: 5%;
+            width: 200px;
+            height: 80%;
+            background-color: rgba(255, 255, 255, 0.7);
+            padding: 10px;
+            overflow-y: auto;
+            border-radius: 8px;
+        }
+        .history-entry {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        .feedback {
+            font-size: 28px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
-
-    <div id="game-container">
-        <div class="score" id="score">Score: 0</div>
-        <div class="question" id="question">What is 1 + 1?</div>
-        <input type="text" class="answer-input" id="answer" autofocus />
-        <div class="history" id="history"></div>
-
-        <!-- Fireworks canvas -->
-        <canvas id="fireworksCanvas"></canvas>
+    <canvas id="canvas"></canvas>
+    <div class="game-container">
+        <div id="question" class="question">Loading...</div>
+        <div id="score" class="score">Score: 0</div>
+        <div class="input-container">
+            <input type="text" id="answer" class="answer-input" placeholder="Your answer" />
+        </div>
+        <div id="feedback" class="feedback"></div>
+    </div>
+    <div class="history" id="history">
+        <h3>History</h3>
+        <div id="history-list"></div>
     </div>
 
     <script>
-        const canvas = document.getElementById('fireworksCanvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        // Set up the canvas
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+        const WIDTH = window.innerWidth;
+        const HEIGHT = window.innerHeight * 0.95;
+        canvas.width = WIDTH;
+        canvas.height = HEIGHT;
 
-        // Game variables
+        // Game state variables
         let score = 0;
-        let currentQuestion = '';
-        let currentAnswer = 0;
-        let userAnswer = '';
+        let question = "";
+        let answer = 0;
+        let user_answer = "";
         let history = [];
         let fireworks = [];
-        let isAnswerCorrect = null;
 
-        // DOM elements
-        const questionDiv = document.getElementById('question');
-        const answerInput = document.getElementById('answer');
-        const scoreDiv = document.getElementById('score');
-        const historyDiv = document.getElementById('history');
-
-        // Generate a new math question
-        function generateQuestion() {
-            const num1 = Math.floor(Math.random() * 50);
-            const num2 = Math.floor(Math.random() * 50);
-            currentQuestion = `${num1} + ${num2}`;
-            currentAnswer = num1 + num2;
-            questionDiv.innerText = currentQuestion + ' = ?';
-            userAnswer = '';
-            answerInput.value = '';
-        }
-
-        // Check the user's answer
-        function checkAnswer() {
-            const userAnswerInt = parseInt(userAnswer, 10);
-            if (userAnswerInt === currentAnswer) {
-                score++;
-                createFireworks();
-                isAnswerCorrect = true;
-                addToHistory('Correct');
-            } else {
-                score -= 2;
-                isAnswerCorrect = false;
-                addToHistory('Wrong');
-            }
-            updateScore();
-            setTimeout(generateQuestion, 2500); // Move to the next question after 2.5 seconds
-        }
-
-        // Add answer to history
-        function addToHistory(status) {
-            history.push(`${currentQuestion} = ${userAnswer} (${status})`);
-            if (history.length > 10) {
-                history.shift();
-            }
-            updateHistory();
-        }
-
-        // Update the score display
-        function updateScore() {
-            scoreDiv.innerText = `Score: ${score}`;
-        }
-
-        // Update the history display
-        function updateHistory() {
-            historyDiv.innerHTML = history.join('<br>');
-        }
-
-        // Fireworks code from the provided script
-
-        // Define the Particle class for the explosion particles
+        // Firework related variables and functions
         class Particle {
-            constructor(x, y, color) {
+            constructor(x, y, xVel, yVel, color) {
                 this.x = x;
                 this.y = y;
+                this.xVel = xVel;
+                this.yVel = yVel;
                 this.color = color;
-                this.velocity = {
-                    x: (Math.random() - 0.5) * 8,
-                    y: (Math.random() - 0.5) * 8
-                };
                 this.alpha = 1;
-                this.friction = 0.99;
+            }
+
+            move() {
+                this.x += this.xVel;
+                this.y += this.yVel;
+                this.alpha -= 0.03;
             }
 
             draw() {
-                ctx.globalAlpha = this.alpha;
                 ctx.beginPath();
-                ctx.arc(this.x, this.y, 2, 0, Math.PI * 2, false);
-                ctx.fillStyle = this.color;
+                ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(${this.color[0]}, ${this.color[1]}, ${this.color[2]}, ${this.alpha})`;
                 ctx.fill();
-            }
-
-            update() {
-                this.velocity.x *= this.friction;
-                this.velocity.y *= this.friction;
-                this.x += this.velocity.x;
-                this.y += this.velocity.y;
-                this.alpha -= 0.01;
+                ctx.closePath();
             }
         }
 
-        // Define the Firework class for the rockets
         class Firework {
             constructor(x, y, color) {
                 this.x = x;
                 this.y = y;
                 this.color = color;
-                this.velocity = {x: 0, y: Math.random() * -2.5 - 0.5};
                 this.particles = [];
-                this.lifespan = 180;
-                this.hasExploded = false;
-            }
-
-            draw() {
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, 3, 0, Math.PI * 2, false);
-                ctx.fillStyle = this.color;
-                ctx.fill();
+                this.exploded = false;
             }
 
             explode() {
-                for (let i = 0; i < 50; i++) {
-                    this.particles.push(new Particle(this.x, this.y, this.color));
+                this.exploded = true;
+                const numParticles = Math.random() * 30 + 20;
+                const angleIncrement = Math.PI * 2 / numParticles;
+                let angle = 0;
+
+                for (let i = 0; i < numParticles; i++) {
+                    let velocity = Math.random() * 3 + 3;
+                    this.particles.push(new Particle(this.x, this.y, Math.cos(angle) * velocity, Math.sin(angle) * velocity, this.color));
+                    angle += angleIncrement;
                 }
             }
 
-            update() {
-                this.lifespan--;
-
-                if (this.lifespan <= 0 && !this.hasExploded) {
-                    this.explode();
-                    this.velocity = {x: 0, y: 0};
-                    this.hasExploded = true;
-                } else if (this.lifespan > 0) {
-                    this.y += this.velocity.y;
+            move() {
+                if (!this.exploded) {
+                    this.y -= 5;
+                    if (this.y <= HEIGHT / 2) {
+                        this.explode();
+                    }
                 }
 
-                for (let i = 0; i < this.particles.length; i++) {
-                    this.particles[i].update();
-                    this.particles[i].draw();
+                for (let particle of this.particles) {
+                    particle.move();
+                }
+            }
+
+            draw() {
+                if (this.exploded) {
+                    for (let particle of this.particles) {
+                        particle.draw();
+                    }
                 }
             }
         }
 
-        // Create fireworks after a correct answer
-        function createFireworks() {
-            const x = Math.random() * canvas.width;
-            const color = `hsl(${Math.random() * 360}, 50%, 50%)`;
-            fireworks.push(new Firework(x, canvas.height, color));
+        // Math game functions
+        function generateQuestion() {
+            const num1 = Math.floor(Math.random() * 50);
+            const num2 = Math.floor(Math.random() * 50);
+            question = `${num1} + ${num2} = ?`;
+            answer = num1 + num2;
+            user_answer = "";
+            document.getElementById("question").innerText = question;
         }
 
-        // Update and draw fireworks
-        function drawFireworks() {
-            fireworks.forEach((firework, index) => {
-                firework.update();
-                firework.draw();
+        function checkAnswer() {
+            const userAnswerInt = parseInt(user_answer);
+            if (userAnswerInt === answer) {
+                score++;
+                fireworks.push(new Firework(WIDTH / 2, HEIGHT / 2, [255, 0, 0]));
+                fireworks.push(new Firework(WIDTH / 4, HEIGHT / 2, [0, 255, 0]));
+                fireworks.push(new Firework(3 * WIDTH / 4, HEIGHT / 2, [0, 0, 255]));
+                updateHistory('Correct');
+                document.getElementById("feedback").innerText = "Correct!";
+            } else {
+                score--;
+                updateHistory('Wrong');
+                document.getElementById("feedback").innerText = "Wrong!";
+            }
+            document.getElementById("score").innerText = `Score: ${score}`;
+            generateQuestion();
+        }
 
-                if (firework.lifespan <= 0 && firework.particles.every(p => p.alpha <= 0)) {
-                    fireworks.splice(index, 1);
-                }
+        function updateHistory(result) {
+            history.push(`${question} Your answer: ${user_answer} (${result})`);
+            const historyList = document.getElementById("history-list");
+            historyList.innerHTML = "";
+            history.slice(-10).forEach(entry => {
+                const div = document.createElement('div');
+                div.classList.add('history-entry');
+                div.innerText = entry;
+                historyList.appendChild(div);
             });
         }
 
+        // Event listener for user input
+        document.getElementById("answer").addEventListener("input", (event) => {
+            user_answer = event.target.value;
+        });
+
+        document.getElementById("answer").addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+                checkAnswer();
+            }
+        });
+
         // Game loop
         function gameLoop() {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            drawFireworks();
+            ctx.clearRect(0, 0, WIDTH, HEIGHT);
+
+            for (let firework of fireworks) {
+                firework.move();
+                firework.draw();
+            }
+
+            fireworks = fireworks.filter(firework => firework.particles.length > 0);
+
             requestAnimationFrame(gameLoop);
         }
-
-        // Show correct or wrong answer feedback
-        function showFeedback() {
-            if (isAnswerCorrect === null) return;
-
-            const feedback = document.createElement('div');
-            feedback.style.position = 'absolute';
-            feedback.style.top = '250px';
-            feedback.style.left = '50%';
-            feedback.style.transform = 'translateX(-50%)';
-            feedback.style.fontSize = '30px';
-            feedback.style.fontWeight = 'bold';
-            feedback.style.transition = 'opacity 1s';
-
-            if (isAnswerCorrect) {
-                feedback.innerText = 'Correct!';
-                feedback.style.color = 'green';
-            } else {
-                feedback.innerText = 'Wrong!';
-                feedback.style.color = 'red';
-            }
-
-            document.body.appendChild(feedback);
-            setTimeout(() => {
-                feedback.style.opacity = 0;
-                setTimeout(() => feedback.remove(), 1000);
-            }, 1000);
-        }
-
-        // Event listeners for user input
-        answerInput.addEventListener('input', (e) => {
-            userAnswer = e.target.value;
-        });
-
-        answerInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                checkAnswer();
-                showFeedback();
-            }
-        });
 
         // Start the game
         generateQuestion();
