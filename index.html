@@ -1,19 +1,239 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Math Fun & Fireworks</title>
-    <link rel="stylesheet" href="css.style">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Math Fun & Fireworks!</title>
+  <style>
+    /* General Styles */
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #f4f4f4;
+    }
+
+    #game-container {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      background-color: white;
+    }
+
+    canvas {
+      display: block;
+      margin: 0 auto;
+    }
+
+    /* Score and Text */
+    .score {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      font-size: 24px;
+      color: black;
+    }
+
+    .question {
+      position: absolute;
+      top: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 36px;
+      font-weight: bold;
+      color: black;
+    }
+
+    .answer-input {
+      position: absolute;
+      top: 200px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 28px;
+      font-family: monospace;
+      border: none;
+      padding: 10px;
+      width: 80px;
+      text-align: center;
+    }
+
+    .correct {
+      color: green;
+      font-size: 30px;
+      position: absolute;
+      top: 250px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .wrong {
+      color: red;
+      font-size: 30px;
+      position: absolute;
+      top: 250px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .history {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      font-size: 18px;
+      color: black;
+      max-height: 300px;
+      overflow-y: auto;
+      width: 200px;
+    }
+
+    /* Aesthetic Styling */
+    .firework {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      opacity: 0;
+      animation: firework-animation 1s forwards;
+    }
+
+    @keyframes firework-animation {
+      0% { transform: scale(1); opacity: 1; }
+      100% { transform: scale(2); opacity: 0; }
+    }
+  </style>
 </head>
 <body>
-    <canvas id="gameCanvas"></canvas>
-    <div class="scoreboard" id="score">Score: 0</div>
+  <div id="game-container">
+    <div class="score" id="score">Score: 0</div>
+    <div class="question" id="question">What is 1 + 1?</div>
+    <input type="text" class="answer-input" id="answer" autofocus />
     <div class="history" id="history"></div>
-    <div class="feedback" id="feedback"></div>
-    <div class="wrong-feedback" id="wrongFeedback"></div>
-    <div class="wrong-symbol" id="wrongSymbol">❌</div>
 
-    <script src="game.js"></script>
+    <!-- Canvas for fireworks -->
+    <canvas id="fireworkCanvas" width="800" height="600"></canvas>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('fireworkCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Game variables
+    let score = 0;
+    let currentQuestion = '';
+    let currentAnswer = 0;
+    let userAnswer = '';
+    let history = [];
+
+    // Fireworks settings
+    const fireworks = [];
+    const colors = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF8C00'];
+
+    // DOM elements
+    const questionDiv = document.getElementById('question');
+    const answerInput = document.getElementById('answer');
+    const scoreDiv = document.getElementById('score');
+    const historyDiv = document.getElementById('history');
+
+    // Generate a new math question
+    function generateQuestion() {
+      const num1 = Math.floor(Math.random() * 50);
+      const num2 = Math.floor(Math.random() * 50);
+      currentQuestion = `${num1} + ${num2}`;
+      currentAnswer = num1 + num2;
+      questionDiv.innerText = currentQuestion + ' = ?';
+      userAnswer = '';
+      answerInput.value = '';
+    }
+
+    // Check the user's answer
+    function checkAnswer() {
+      const userAnswerInt = parseInt(userAnswer, 10);
+      if (userAnswerInt === currentAnswer) {
+        score++;
+        createFirework();
+        addToHistory('Correct');
+      } else {
+        score -= 2;
+        addToHistory('Wrong');
+      }
+      updateScore();
+      setTimeout(generateQuestion, 2500);
+    }
+
+    // Add answer to history
+    function addToHistory(status) {
+      history.push(`${currentQuestion} = ${userAnswer} (${status})`);
+      if (history.length > 10) {
+        history.shift();
+      }
+      updateHistory();
+    }
+
+    // Update the score display
+    function updateScore() {
+      scoreDiv.innerText = `Score: ${score}`;
+    }
+
+    // Update the history display
+    function updateHistory() {
+      historyDiv.innerHTML = history.join('<br>');
+    }
+
+    // Create a random firework
+    function createFirework() {
+      const firework = {
+        x: Math.random() * canvas.width,
+        y: Math.random() * (canvas.height / 2),
+        size: Math.random() * 5 + 5,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        speedX: Math.random() * 4 - 2,
+        speedY: Math.random() * 4 - 2,
+      };
+      fireworks.push(firework);
+    }
+
+    // Draw fireworks
+    function drawFireworks() {
+      fireworks.forEach((firework, index) => {
+        ctx.beginPath();
+        ctx.arc(firework.x, firework.y, firework.size, 0, Math.PI * 2);
+        ctx.fillStyle = firework.color;
+        ctx.fill();
+        firework.x += firework.speedX;
+        firework.y += firework.speedY;
+        firework.size *= 0.95;
+        if (firework.size < 0.5) {
+          fireworks.splice(index, 1);
+        }
+      });
+    }
+
+    // Game loop
+    function gameLoop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawFireworks();
+      requestAnimationFrame(gameLoop);
+    }
+
+    // Event listeners for user input
+    answerInput.addEventListener('input', (e) => {
+      userAnswer = e.target.value;
+    });
+
+    answerInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        checkAnswer();
+      }
+    });
+
+    // Start the game
+    generateQuestion();
+    gameLoop();
+
+  </script>
 </body>
 </html>
