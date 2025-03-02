@@ -54,6 +54,24 @@
             font-weight: bold;
             margin-top: 20px;
         }
+        .streak {
+            font-size: 22px;
+            font-weight: bold;
+            margin-top: 10px;
+            color: green;
+        }
+        .sad-face {
+            font-size: 50px;
+            color: red;
+            margin-top: 20px;
+            display: none;
+        }
+        .encouragement {
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 10px;
+            color: #4CAF50;
+        }
     </style>
 </head>
 <body>
@@ -61,10 +79,13 @@
     <div class="game-container">
         <div id="question" class="question">Loading...</div>
         <div id="score" class="score">Score: 0</div>
+        <div id="streak" class="streak">Streak: 0</div>
         <div class="input-container">
             <input type="text" id="answer" class="answer-input" placeholder="Your answer" />
         </div>
         <div id="feedback" class="feedback"></div>
+        <div id="encouragement" class="encouragement"></div>
+        <div id="wrong-feedback" class="sad-face">X</div>
     </div>
     <div class="history" id="history">
         <h3>History</h3>
@@ -82,11 +103,14 @@
 
         // Game state variables
         let score = 0;
+        let streak = 0;
         let question = "";
         let answer = 0;
         let user_answer = "";
         let history = [];
         let fireworks = [];
+        let feedbackTime = 0;
+        let encouragementTime = 0;
 
         // Firework related variables and functions
         class Particle {
@@ -156,6 +180,10 @@
                     }
                 }
             }
+
+            isExpired() {
+                return Date.now() - this.explodeTime > 3000; // Fireworks last 3 seconds
+            }
         }
 
         // Math game functions
@@ -172,17 +200,25 @@
             const userAnswerInt = parseInt(user_answer);
             if (userAnswerInt === answer) {
                 score++;
+                streak++;
                 fireworks.push(new Firework(WIDTH / 2, HEIGHT / 2, [255, 0, 0]));
                 fireworks.push(new Firework(WIDTH / 4, HEIGHT / 2, [0, 255, 0]));
                 fireworks.push(new Firework(3 * WIDTH / 4, HEIGHT / 2, [0, 0, 255]));
                 updateHistory('Correct');
                 document.getElementById("feedback").innerText = "Correct!";
+                document.getElementById("encouragement").innerText = getEncouragement();
             } else {
                 score--;
+                streak = 0;
                 updateHistory('Wrong');
+                document.getElementById("wrong-feedback").style.display = "block";
+                setTimeout(() => {
+                    document.getElementById("wrong-feedback").style.display = "none";
+                }, 1000);
                 document.getElementById("feedback").innerText = "Wrong!";
             }
             document.getElementById("score").innerText = `Score: ${score}`;
+            document.getElementById("streak").innerText = `Streak: ${streak}`;
             generateQuestion();
         }
 
@@ -196,6 +232,18 @@
                 div.innerText = entry;
                 historyList.appendChild(div);
             });
+        }
+
+        function getEncouragement() {
+            if (streak >= 5) {
+                return "Great job! Keep it up!";
+            } else if (streak >= 3) {
+                return "You're on fire!";
+            } else if (streak >= 1) {
+                return "Nice work!";
+            } else {
+                return "";
+            }
         }
 
         // Event listener for user input
