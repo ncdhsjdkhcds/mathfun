@@ -197,16 +197,30 @@
         }
 
         function checkAnswer() {
-    const userAnswerInt = parseInt(user_answer);
-    if (userAnswerInt === answer) {
-        score++;
-        streak++;
-        fireworks.push(new Firework(WIDTH / 2, HEIGHT / 2, [255, 0, 0]));
-        fireworks.push(new Firework(WIDTH / 4, HEIGHT / 2, [0, 255, 0]));
-        fireworks.push(new Firework(3 * WIDTH / 4, HEIGHT / 2, [0, 0, 255]));
-        updateHistory('Correct');
-        document.getElementById("feedback").innerText = "Correct!";
-        document.getElementById("
+            const userAnswerInt = parseInt(user_answer);
+            if (userAnswerInt === answer) {
+                score++;
+                streak++;
+                fireworks.push(new Firework(WIDTH / 2, HEIGHT / 2, [255, 0, 0]));
+                fireworks.push(new Firework(WIDTH / 4, HEIGHT / 2, [0, 255, 0]));
+                fireworks.push(new Firework(3 * WIDTH / 4, HEIGHT / 2, [0, 0, 255]));
+                updateHistory('Correct');
+                document.getElementById("feedback").innerText = "Correct!";
+                document.getElementById("encouragement").innerText = getEncouragement();
+            } else {
+                score--;
+                streak = 0;
+                updateHistory('Wrong');
+                document.getElementById("wrong-feedback").style.display = "block";
+                setTimeout(() => {
+                    document.getElementById("wrong-feedback").style.display = "none";
+                }, 1000);
+                document.getElementById("feedback").innerText = "Wrong!";
+            }
+            document.getElementById("score").innerText = `Score: ${score}`;
+            document.getElementById("streak").innerText = `Streak: ${streak}`;
+            generateQuestion();
+        }
 
         function updateHistory(result) {
             history.push(`${question} Your answer: ${user_answer} (${result})`);
